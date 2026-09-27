@@ -622,6 +622,19 @@ const server = http.createServer((req, res) => {
 server.requestTimeout = 0;
 server.headersTimeout = 60000;
 
+// 환경 변수로 초기 관리자/설정 부트스트랩 (Render 등 디스크가 초기화되는 호스팅용)
+if (!auth.isSetup() && process.env.ADMIN_PASSWORD) {
+  try {
+    auth.setup(process.env.ADMIN_USER || 'admin', process.env.ADMIN_PASSWORD);
+    ctx.audit('info', 'auth', `환경 변수로 관리자 계정 생성 (${process.env.ADMIN_USER || 'admin'})`);
+  } catch (e) { console.error('ADMIN_PASSWORD 부트스트랩 실패:', e.message); }
+}
+if (process.env.SITE_NAME && ctx.db.settings.siteName === 'HALCYON') ctx.db.settings.siteName = str(process.env.SITE_NAME, 60);
+if (/^(1|true|yes)$/i.test(process.env.TRUST_PROXY || '')) ctx.db.settings.trustProxy = true;
+if (process.env.PUBLIC_HOST && !ctx.db.settings.publicHost) ctx.db.settings.publicHost = str(process.env.PUBLIC_HOST, 253);
+if (process.env.RENDER_EXTERNAL_HOSTNAME && !ctx.db.settings.publicHost) ctx.db.settings.publicHost = process.env.RENDER_EXTERNAL_HOSTNAME;
+store.save();
+
 server.listen(PORT, HOST, () => {
   ctx.audit('info', 'system', `HALCYON 홈 서버 콘솔 v${VERSION} 시작 — http://${HOST === '0.0.0.0' ? 'localhost' : HOST}:${PORT} (데이터: ${DATA_DIR})`);
   if (!auth.isSetup()) console.log('▶ 초기 설정: 브라우저에서 /admin 으로 접속해 관리자 계정을 만드세요.');

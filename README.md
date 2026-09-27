@@ -94,6 +94,38 @@ if not res.valid then return warn(res.message) end
 
 ## 배포
 
+### 📱 핸드폰에서 버튼으로 배포 (무료 호스팅)
+
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/like6296-dev/ai-)
+
+1. 위 버튼 → GitHub 로그인 → `ADMIN_PASSWORD` 입력(6자 이상) → **Apply**
+2. 2~3분 뒤 `https://halcyon-xxxx.onrender.com/admin` 에서 `admin` / 입력한 비밀번호로 로그인
+3. 무료 플랜은 15분 동안 접속이 없으면 잠들었다가 다음 접속 때 깨어나고(30초쯤), 디스크가 초기화됩니다. 관리자 계정은 환경 변수로 다시 만들어지므로 로그인은 그대로 됩니다. 저장소 파일·VM 등 상태를 오래 보관하려면 유료 디스크를 붙이거나 아래 집 서버 설치를 쓰세요.
+
+다른 PaaS(Koyeb, Railway, Zeabur, Cloudtype 등)도 "GitHub 저장소에서 배포"를 고르고 시작 명령 `node server.js`, 환경 변수 `ADMIN_PASSWORD`, `TRUST_PROXY=1` 만 넣으면 동일하게 동작합니다.
+
+### 🏠 집 서버 한 줄 설치 (Ubuntu/Debian)
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/like6296-dev/ai-/main/deploy/install.sh | sudo bash
+```
+
+`/opt/halcyon` 에 설치되고 systemd 서비스 `halcyon` 으로 자동 시작됩니다. 끝나면 `http://서버IP:3000/admin` 이 출력됩니다. 밖(핸드폰 LTE)에서 접속하려면 공유기 포트포워딩보다 **Tailscale** 이나 이 콘솔의 **WireGuard VPN** 기능을 권장합니다.
+
+### 환경 변수
+
+| 변수 | 기본값 | 설명 |
+|---|---|---|
+| `PORT` | 3000 | 포트 |
+| `HOST` | 0.0.0.0 | 바인딩 주소 |
+| `DATA_DIR` | ./data | 데이터 폴더 |
+| `ADMIN_USER` / `ADMIN_PASSWORD` | — | 설정돼 있고 관리자가 없으면 시작 시 자동 생성 |
+| `SITE_NAME` | HALCYON | 사이트 이름 |
+| `TRUST_PROXY` | — | `1` 이면 X-Forwarded-For 신뢰 (Render/nginx 뒤) |
+| `PUBLIC_HOST` | — | 공개 호스트 (VPN 엔드포인트 기본값) |
+
+### 직접 실행
+
 ```bash
 # 환경 변수
 PORT=3000 HOST=0.0.0.0 DATA_DIR=./data node server.js
