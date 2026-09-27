@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>서버 점검 중</title>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: radial-gradient(1200px 600px at 50% -10%, #2a1f5c 0%, #0f1320 55%, #0a0d16 100%); color: #e6e9f2; font-family: "Pretendard", "Apple SD Gothic Neo", "Noto Sans KR", system-ui, -apple-system, "Segoe UI", sans-serif; padding: 24px; }
+  .card { width: 100%; max-width: 560px; background: rgba(22, 27, 45, .85); border: 1px solid rgba(255,255,255,.08); border-radius: 20px; padding: 40px 36px; text-align: center; box-shadow: 0 30px 80px rgba(0,0,0,.45); backdrop-filter: blur(12px); }
+  .icon { width: 84px; height: 84px; margin: 0 auto 20px; border-radius: 24px; background: linear-gradient(135deg, #7c5cff, #b47aff); display: grid; place-items: center; box-shadow: 0 12px 30px rgba(124, 92, 255, .4); animation: float 3s ease-in-out infinite; }
+  .icon svg { width: 44px; height: 44px; }
+  @keyframes float { 0%,100% { transform: translateY(0) } 50% { transform: translateY(-6px) } }
+  h1 { font-size: 26px; margin: 0 0 12px; letter-spacing: -.02em; }
+  p { color: #aab1c5; line-height: 1.7; margin: 0 0 22px; white-space: pre-wrap; }
+  .until { display: inline-flex; gap: 8px; align-items: center; padding: 10px 16px; border-radius: 999px; background: rgba(124, 92, 255, .15); color: #c9bfff; font-size: 14px; font-variant-numeric: tabular-nums; }
+  .until b { font-weight: 600; color: #fff; }
+  .foot { margin-top: 26px; font-size: 12px; color: #6f7790; }
+  .foot a { color: #9aa8ff; text-decoration: none; }
+  .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #b47aff; animation: pulse 1.4s infinite; }
+  @keyframes pulse { 0%,100% { opacity: .35 } 50% { opacity: 1 } }
+</style>
+</head>
+<body>
+  <div class="card">
+    <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg></div>
+    <h1 id="title">서버 점검 중입니다</h1>
+    <p id="message">더 나은 서비스를 위해 점검을 진행하고 있습니다. 잠시 후 다시 접속해 주세요.</p>
+    <div class="until" id="until" hidden><span class="dot"></span> 예상 종료 <b id="untilTime"></b> <span id="countdown"></span></div>
+    <div class="foot"><span id="site"></span> · 자동으로 새로고침됩니다 · <a href="/admin">관리자</a></div>
+  </div>
+<script>
+(function () {
+  var until = null;
+  function pad(n) { return String(n).padStart(2, '0'); }
+  function tick() {
+    if (!until) return;
+    var d = until - Date.now();
+    var el = document.getElementById('countdown');
+    if (d <= 0) { el.textContent = '(곧 종료)'; return; }
+    var h = Math.floor(d / 3600000), m = Math.floor(d % 3600000 / 60000), s = Math.floor(d % 60000 / 1000);
+    el.textContent = '(' + (h ? h + ':' : '') + pad(m) + ':' + pad(s) + ' 남음)';
+  }
+  function load() {
+    fetch('/api/public/status', { cache: 'no-store' }).then(function (r) { return r.json(); }).then(function (s) {
+      document.title = s.maintenance.title + ' · ' + s.siteName;
+      document.getElementById('site').textContent = s.siteName;
+      document.getElementById('title').textContent = s.maintenance.title;
+      document.getElementById('message').textContent = s.maintenance.message;
+      var preview = location.search.indexOf('preview') >= 0;
+      if (!s.maintenance.enabled && !preview) { location.href = '/'; return; }
+      if (s.maintenance.until) {
+        until = s.maintenance.until;
+        document.getElementById('until').hidden = false;
+        document.getElementById('untilTime').textContent = new Date(until).toLocaleString('ko-KR', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+        tick();
+      } else { document.getElementById('until').hidden = true; }
+    }).catch(function () {});
+  }
+  load();
+  setInterval(load, 20000);
+  setInterval(tick, 1000);
+})();
+</script>
+</body>
+</html>

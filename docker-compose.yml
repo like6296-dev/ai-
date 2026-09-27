@@ -1,0 +1,14 @@
+services:
+  server-hub:
+    build: .
+    container_name: server-hub
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./data:/data
+      # Docker 백엔드로 VM(컨테이너)을 만들려면 아래 주석을 해제하고 docker-cli 를 이미지에 추가하세요
+      # - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - PORT=3000
+      - DATA_DIR=/data
