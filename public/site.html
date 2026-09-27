@@ -3,15 +3,16 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Server Hub</title>
+<title>HALCYON</title>
 <style>
-  :root { color-scheme: dark; --bg: #0b0e17; --card: #141a2a; --line: rgba(255,255,255,.08); --text: #e6e9f2; --muted: #9098ad; --accent: #7aa2ff; --ok: #3ddc97; --warn: #f6b84b; }
+  :root { color-scheme: dark; --bg: #0b0e17; --card: #141a2a; --line: rgba(255,255,255,.08); --text: #e6e9f2; --muted: #9098ad; --accent: #38bdf8; --ok: #3ddc97; --warn: #f6b84b; }
   * { box-sizing: border-box; }
-  body { margin: 0; background: radial-gradient(900px 500px at 80% -10%, #1d2a55 0%, var(--bg) 60%); color: var(--text); font-family: "Pretendard", "Apple SD Gothic Neo", "Noto Sans KR", system-ui, -apple-system, "Segoe UI", sans-serif; min-height: 100vh; }
+  body { margin: 0; background: radial-gradient(900px 500px at 80% -10%, #0f2a3f 0%, var(--bg) 60%); color: var(--text); font-family: "Pretendard", "Apple SD Gothic Neo", "Noto Sans KR", system-ui, -apple-system, "Segoe UI", sans-serif; min-height: 100vh; }
   .wrap { max-width: 920px; margin: 0 auto; padding: 48px 20px 60px; }
   header { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 36px; }
   .brand { display: flex; align-items: center; gap: 14px; }
-  .logo { width: 46px; height: 46px; border-radius: 14px; background: linear-gradient(135deg, #5b7cff, #a06bff); display: grid; place-items: center; font-weight: 800; color: #fff; box-shadow: 0 10px 24px rgba(91,124,255,.35); }
+  .logo { width: 46px; height: 46px; border-radius: 14px; background: linear-gradient(135deg, #22d3ee, #6366f1); display: grid; place-items: center; box-shadow: 0 10px 24px rgba(34,211,238,.3); }
+  .logo svg { width: 30px; height: 30px; }
   h1 { margin: 0; font-size: 26px; letter-spacing: -.02em; }
   .desc { color: var(--muted); margin: 4px 0 0; font-size: 14px; }
   .status { display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 999px; font-size: 13px; font-weight: 600; border: 1px solid var(--line); background: rgba(255,255,255,.03); }
@@ -42,8 +43,8 @@
 <div class="wrap">
   <header>
     <div class="brand">
-      <div class="logo" id="logo">S</div>
-      <div><h1 id="siteName">Server Hub</h1><p class="desc" id="desc"></p></div>
+      <div class="logo" id="logo"><svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="14" r="6" fill="#fff"/><path d="M6 20h20M8 24h16" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/></svg></div>
+      <div><h1 id="siteName">HALCYON</h1><p class="desc" id="desc"></p></div>
     </div>
     <div class="status" id="status"><span class="dot"></span><span id="statusText">정상 운영 중</span></div>
   </header>
@@ -54,7 +55,7 @@
   </div>
   <section><h2>공지사항</h2><div id="announcements" class="empty">등록된 공지가 없습니다.</div></section>
   <section><h2>게임 서버</h2><div id="games" class="empty">등록된 게임이 없습니다.</div></section>
-  <footer>Powered by Server Hub · <a href="/admin">관리자 페이지</a></footer>
+  <footer>HALCYON 홈 서버 콘솔 · <a href="/admin">관리자 페이지</a></footer>
 </div>
 <script>
 (function () {
@@ -66,7 +67,6 @@
       serverOffset = s.time - Date.now();
       document.title = s.siteName;
       document.getElementById('siteName').textContent = s.siteName;
-      document.getElementById('logo').textContent = (s.siteName || 'S').trim().charAt(0).toUpperCase();
       document.getElementById('desc').textContent = s.description || '';
       var st = document.getElementById('status');
       st.className = 'status' + (s.maintenance.enabled ? ' maint' : '');

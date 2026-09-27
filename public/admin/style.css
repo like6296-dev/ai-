@@ -2,7 +2,7 @@
   color-scheme: dark;
   --bg: #0b0e17; --bg2: #10141f; --card: #151b2b; --card2: #1b2235; --line: rgba(255,255,255,.08); --line2: rgba(255,255,255,.14);
   --text: #e7eaf3; --muted: #9098ad; --dim: #6b7390;
-  --accent: #6d8cff; --accent2: #8f6bff; --ok: #3ddc97; --warn: #f6b84b; --danger: #ff6b6b; --info: #5cc8ff;
+  --accent: #38bdf8; --accent2: #6366f1; --ok: #3ddc97; --warn: #f6b84b; --danger: #ff6b6b; --info: #5cc8ff;
   --radius: 14px; --sidebar: 236px;
 }
 * { box-sizing: border-box; }
@@ -30,13 +30,14 @@ p { margin: 0; }
 .layout { display: flex; min-height: 100vh; }
 .sidebar { width: var(--sidebar); flex: 0 0 var(--sidebar); background: var(--bg2); border-right: 1px solid var(--line); display: flex; flex-direction: column; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
 .brand { display: flex; align-items: center; gap: 12px; padding: 20px 18px 14px; }
-.brand .logo { width: 38px; height: 38px; border-radius: 12px; background: linear-gradient(135deg, #5b7cff, #a06bff); display: grid; place-items: center; color: #fff; font-weight: 800; font-size: 17px; box-shadow: 0 8px 20px rgba(91,124,255,.35); }
+.brand .logo { width: 38px; height: 38px; border-radius: 12px; background: linear-gradient(135deg, #22d3ee, #6366f1); display: grid; place-items: center; box-shadow: 0 8px 20px rgba(34,211,238,.3); flex: none; }
+.brand .logo svg { width: 26px; height: 26px; }
 .brand b { display: block; font-size: 15px; } .brand span { font-size: 11px; color: var(--dim); }
 .nav { padding: 6px 10px; display: flex; flex-direction: column; gap: 2px; }
 .nav a { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 10px; color: var(--muted); font-weight: 500; transition: .15s; }
 .nav a svg { width: 18px; height: 18px; flex: none; opacity: .85; }
 .nav a:hover { background: rgba(255,255,255,.04); color: var(--text); }
-.nav a.active { background: rgba(109,140,255,.14); color: #dfe6ff; }
+.nav a.active { background: rgba(56,189,248,.14); color: #e0f4ff; }
 .nav .sep { font-size: 11px; text-transform: uppercase; letter-spacing: .1em; color: var(--dim); padding: 14px 12px 6px; }
 .sidefoot { margin-top: auto; padding: 14px 16px; border-top: 1px solid var(--line); font-size: 12px; color: var(--dim); display: flex; justify-content: space-between; align-items: center; gap: 8px; }
 .main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
@@ -73,7 +74,7 @@ p { margin: 0; }
 .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 8px 14px; border-radius: 10px; border: 1px solid var(--line2); background: var(--card2); color: var(--text); cursor: pointer; font-weight: 500; white-space: nowrap; transition: .15s; line-height: 1.2; }
 .btn:hover { border-color: rgba(255,255,255,.25); background: #222a40; }
 .btn:disabled { opacity: .5; cursor: not-allowed; }
-.btn.primary { background: linear-gradient(135deg, #5b7cff, #7d5fff); border-color: transparent; color: #fff; }
+.btn.primary { background: linear-gradient(135deg, #0ea5e9, #6366f1); border-color: transparent; color: #fff; }
 .btn.primary:hover { filter: brightness(1.08); }
 .btn.danger { background: rgba(255,107,107,.12); border-color: rgba(255,107,107,.35); color: #ff8c8c; }
 .btn.danger:hover { background: rgba(255,107,107,.22); }
@@ -91,7 +92,7 @@ p { margin: 0; }
 .field > label { font-size: 12.5px; color: var(--muted); font-weight: 500; }
 .field .help { font-size: 11.5px; color: var(--dim); }
 .input, .select, .textarea { width: 100%; background: #0f1422; border: 1px solid var(--line2); border-radius: 10px; padding: 9px 12px; color: var(--text); outline: none; transition: .15s; }
-.input:focus, .select:focus, .textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(109,140,255,.18); }
+.input:focus, .select:focus, .textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(56,189,248,.18); }
 .textarea { min-height: 90px; resize: vertical; }
 .select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239098ad' stroke-width='2.5'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 32px; }
 .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
@@ -113,7 +114,7 @@ p { margin: 0; }
 .badge.warn { background: rgba(246,184,75,.14); color: #ffd07a; }
 .badge.danger { background: rgba(255,107,107,.14); color: #ff8c8c; }
 .badge.info { background: rgba(92,200,255,.14); color: #8fdcff; }
-.badge.accent { background: rgba(109,140,255,.16); color: #b3c3ff; }
+.badge.accent { background: rgba(56,189,248,.16); color: #a5e3ff; }
 .badge .dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
 .badge.live .dot { animation: pulse 1.3s infinite; }
 @keyframes pulse { 0%,100% { opacity: .35 } 50% { opacity: 1 } }
@@ -140,7 +141,7 @@ pre.code { background: #0a0d16; border: 1px solid var(--line); border-radius: 10
 .log-item:last-child { border-bottom: 0; }
 .log-item .lv { font-weight: 700; font-size: 11px; text-transform: uppercase; }
 .dropzone { border: 2px dashed var(--line2); border-radius: 12px; padding: 14px; text-align: center; color: var(--dim); transition: .15s; }
-.dropzone.over { border-color: var(--accent); background: rgba(109,140,255,.08); color: var(--text); }
+.dropzone.over { border-color: var(--accent); background: rgba(56,189,248,.08); color: var(--text); }
 .crumbs { display: flex; gap: 4px; align-items: center; flex-wrap: wrap; font-size: 13.5px; }
 .crumbs a { padding: 3px 7px; border-radius: 6px; } .crumbs a:hover { background: rgba(255,255,255,.06); }
 .crumbs .sep { color: var(--dim); }
@@ -177,6 +178,6 @@ pre.code { background: #0a0d16; border: 1px solid var(--line); border-radius: 10
 .modal-foot { display: flex; justify-content: flex-end; gap: 8px; padding: 14px 20px; border-top: 1px solid var(--line); }
 
 /* 로그인 */
-.auth { min-height: 100vh; display: grid; place-items: center; padding: 20px; background: radial-gradient(900px 500px at 50% -10%, #1d2a55 0%, var(--bg) 60%); }
+.auth { min-height: 100vh; display: grid; place-items: center; padding: 20px; background: radial-gradient(900px 500px at 50% -10%, #0f2a3f 0%, var(--bg) 60%); }
 .auth .card { width: 100%; max-width: 400px; padding: 30px 28px; }
 .auth .brand { padding: 0 0 18px; }

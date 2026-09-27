@@ -1,6 +1,6 @@
-# Server Hub — 서버 관리 사이트
+# HALCYON — 홈 서버 콘솔
 
-외부 의존성 없이 **Node.js 18+** 만으로 동작하는 올인원 서버 관리 웹사이트입니다.
+외부 의존성 없이 **Node.js 18+** 만으로 동작하는 올인원 홈 서버 관리 콘솔입니다.
 점검 모드, 게임(Roblox 등) 연동, WireGuard VPN, 가상 저장소, 가상 머신, 예약 작업, 백업, 네트워크 도구, 실시간 모니터링을 한 화면에서 관리합니다.
 
 ```bash
@@ -14,7 +14,7 @@ npm start            # http://localhost:3000
 | 경로 | 설명 |
 |---|---|
 | `/` | 공개 페이지 (사이트 상태 · 공지 · 게임 접속자 수) — 점검 중이면 503 점검 페이지 |
-| `/admin` | 관리자 콘솔 |
+| `/admin` | HALCYON 관리자 콘솔 |
 | `/maintenance?preview=1` | 점검 페이지 미리보기 |
 | `/s/<token>` | 가상 저장소 공유 링크 |
 | `/api/game/*` | 게임 스크립트용 API (게임 API 키 인증) |
@@ -89,9 +89,9 @@ if not res.valid then return warn(res.message) end
 # 환경 변수
 PORT=3000 HOST=0.0.0.0 DATA_DIR=./data node server.js
 
-# systemd (deploy/server-hub.service 참고)
-sudo cp -r . /opt/server-hub && sudo cp deploy/server-hub.service /etc/systemd/system/
-sudo systemctl daemon-reload && sudo systemctl enable --now server-hub
+# systemd (deploy/halcyon.service 참고)
+sudo cp -r . /opt/halcyon && sudo cp deploy/halcyon.service /etc/systemd/system/
+sudo systemctl daemon-reload && sudo systemctl enable --now halcyon
 
 # Docker
 docker compose up -d
@@ -116,7 +116,7 @@ server.js          HTTP 서버 · 라우팅 · 점검 게이트
 lib/               auth, monitor, storage, vpn, vm, games, scheduler(cron), backup, nettools, notify
 public/site.html   공개 페이지
 public/maintenance.html  점검 페이지
-public/admin/      관리자 SPA (index.html, app.js, style.css)
+public/admin/      HALCYON 관리자 SPA (index.html, app.js, style.css)
 deploy/            systemd · nginx 예시
 data/              런타임 데이터 (git 제외)
 ```

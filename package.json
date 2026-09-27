@@ -1,7 +1,7 @@
 {
-  "name": "server-hub",
+  "name": "halcyon",
   "version": "1.0.0",
-  "description": "서버 관리 사이트 — 점검 모드, 게임 연동, VPN, 가상 저장소, 가상 머신, 예약 작업, 백업, 모니터링 (의존성 없음)",
+  "description": "HALCYON 홈 서버 콘솔 — 점검 모드, 게임 연동, VPN, 가상 저장소, 가상 머신, 예약 작업, 백업, 모니터링 (의존성 없음)",
   "main": "server.js",
   "private": true,
   "scripts": {

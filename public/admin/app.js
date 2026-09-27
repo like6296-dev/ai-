@@ -1,4 +1,4 @@
-/* Server Hub 관리자 SPA — 의존성 없는 바닐라 JS */
+/* HALCYON 홈 서버 콘솔 — 관리자 SPA (의존성 없는 바닐라 JS) */
 (() => {
 'use strict';
 
@@ -149,7 +149,7 @@ function renderShell() {
   app.innerHTML = `
   <div class="layout">
     <aside class="sidebar" id="sidebar">
-      <div class="brand"><div class="logo">${esc((a.siteName || 'S').trim().charAt(0).toUpperCase())}</div><div><b id="brandName">${esc(a.siteName || 'Server Hub')}</b><span>관리자 콘솔 v${esc(a.version || '')}</span></div></div>
+      <div class="brand"><div class="logo"><svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="14" r="6" fill="#fff"/><path d="M6 20h20M8 24h16" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/></svg></div><div><b id="brandName">${esc(a.siteName || 'HALCYON')}</b><span>홈 서버 콘솔 · v${esc(a.version || '')}</span></div></div>
       <nav class="nav">${NAV.map((n) => n.sep ? `<div class="sep">${esc(n.sep)}</div>` : `<a href="#/${n.id}" data-nav="${n.id}">${ICONS[n.id] || ''}<span>${esc(n.label)}</span></a>`).join('')}</nav>
       <div class="sidefoot"><span>${esc(a.username || '')}</span><div class="row"><a href="/" target="_blank" class="btn ghost xs">사이트</a><button class="btn ghost xs" id="logoutBtn">로그아웃</button></div></div>
     </aside>
@@ -186,8 +186,8 @@ async function refreshTopStatus() {
 }
 
 function renderSetup(app) {
-  app.innerHTML = `<div class="auth"><div class="card"><div class="brand"><div class="logo">S</div><div><b>Server Hub 초기 설정</b><span>관리자 계정을 만들어 시작하세요</span></div></div>
-    <form id="setupForm" class="col">${fields([{ name: 'siteName', label: '사이트 이름', value: 'Server Hub', full: true }, { name: 'username', label: '관리자 아이디', required: true, full: true }, { name: 'password', label: '비밀번호 (6자 이상)', type: 'password', required: true, full: true }, { name: 'password2', label: '비밀번호 확인', type: 'password', required: true, full: true }])}
+  app.innerHTML = `<div class="auth"><div class="card"><div class="brand"><div class="logo"><svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="14" r="6" fill="#fff"/><path d="M6 20h20M8 24h16" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/></svg></div><div><b>HALCYON 초기 설정</b><span>홈 서버 콘솔 · 관리자 계정을 만들어 시작하세요</span></div></div>
+    <form id="setupForm" class="col">${fields([{ name: 'siteName', label: '사이트 이름', value: 'HALCYON', full: true }, { name: 'username', label: '관리자 아이디', required: true, full: true }, { name: 'password', label: '비밀번호 (6자 이상)', type: 'password', required: true, full: true }, { name: 'password2', label: '비밀번호 확인', type: 'password', required: true, full: true }])}
     <button class="btn primary mt" type="submit">설정 완료</button></form></div></div>`;
   $('#setupForm').onsubmit = async (e) => {
     e.preventDefault();
@@ -198,7 +198,7 @@ function renderSetup(app) {
   };
 }
 function renderLogin(app) {
-  app.innerHTML = `<div class="auth"><div class="card"><div class="brand"><div class="logo">${esc((state.auth.siteName || 'S').charAt(0).toUpperCase())}</div><div><b>${esc(state.auth.siteName || 'Server Hub')}</b><span>관리자 로그인</span></div></div>
+  app.innerHTML = `<div class="auth"><div class="card"><div class="brand"><div class="logo"><svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="14" r="6" fill="#fff"/><path d="M6 20h20M8 24h16" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/></svg></div><div><b>${esc(state.auth.siteName || 'HALCYON')}</b><span>HALCYON 홈 서버 콘솔 · 로그인</span></div></div>
     <form id="loginForm" class="col">${fields([{ name: 'username', label: '아이디', required: true, full: true }, { name: 'password', label: '비밀번호', type: 'password', required: true, full: true }])}
     <button class="btn primary mt" type="submit">로그인</button><a href="/" class="small dim" style="text-align:center">← 공개 사이트로</a></form></div></div>`;
   $('#loginForm').onsubmit = async (e) => {
@@ -357,7 +357,7 @@ views.announcements = {
 
 // ------------------------------------------------------------ 게임 연동
 function luaSnippet(g, origin) {
-  return `-- Server Hub 연동 (Roblox Luau 예시)
+  return `-- HALCYON 홈 서버 콘솔 연동 (Roblox Luau 예시)
 -- 서버 스크립트(HttpService) 또는 실행기 환경(request/game:HttpGet)에서 사용
 local HUB_URL = "${origin}"
 local GAME_KEY = "${g.apiKey}"
@@ -878,7 +878,7 @@ views.settings = {
         <div class="card-title mt"><h3>가상 머신 기본 백엔드</h3></div><form id="vmForm" class="row">${fields([{ name: 'defaultBackend', label: '기본 백엔드', type: 'select', value: s.vm.defaultBackend, options: [{ value: 'auto', label: '자동 (QEMU → Docker → 시뮬레이션)' }, { value: 'qemu', label: 'QEMU' }, { value: 'docker', label: 'Docker' }, { value: 'simulated', label: '시뮬레이션' }] }])}<button class="btn" type="submit" style="margin-top:22px">저장</button></form></div>
       <div class="card"><div class="card-title"><h3>관리자 비밀번호</h3></div><form id="pwForm" class="col">${fields([{ name: 'current', label: '현재 비밀번호', type: 'password', required: true, full: true }, { name: 'next', label: '새 비밀번호', type: 'password', required: true }, { name: 'next2', label: '새 비밀번호 확인', type: 'password', required: true }])}<div class="row mt"><button class="btn primary" type="submit">변경</button><span class="dim small">변경 시 모든 세션이 로그아웃됩니다</span></div></form></div>
       <div class="card" style="grid-column:1/-1"><div class="card-title"><h3>API 토큰</h3><button class="btn primary sm" id="addToken">+ 토큰</button></div><p class="muted small">외부 스크립트/자동화에서 <code>Authorization: Bearer 토큰</code> 헤더로 관리자 API 를 호출할 수 있습니다.</p><div class="table-wrap mt"><table><thead><tr><th>이름</th><th>토큰</th><th>생성</th><th>마지막 사용</th><th></th></tr></thead><tbody id="tokRows">${tokens.map((t) => `<tr data-t="${t.id}"><td>${esc(t.name)}</td><td class="mono small">${esc(t.preview)}</td><td class="small dim">${fmtDate(t.created)}</td><td class="small dim">${t.lastUsed ? ago(t.lastUsed) : '—'}</td><td class="right"><button class="btn xs danger" data-del>삭제</button></td></tr>`).join('') || '<tr><td colspan="5" class="dim small" style="border:0">토큰이 없습니다</td></tr>'}</tbody></table></div></div>
-      <div class="card" style="grid-column:1/-1"><div class="card-title"><h3>시스템</h3><button class="btn danger sm" id="restart">서버 프로세스 재시작</button></div><dl class="kv"><dt>버전</dt><dd>Server Hub v${esc(s.system.version)}</dd><dt>Node.js</dt><dd>${esc(s.system.node)}</dd><dt>데이터 폴더</dt><dd class="mono">${esc(s.system.dataDir)}</dd><dt>바인딩</dt><dd class="mono">${esc(s.system.host)}:${s.system.port}</dd><dt>PID</dt><dd>${s.system.pid}</dd><dt>가동 시간</dt><dd>${fmtDur(s.system.uptime)}</dd></dl>
+      <div class="card" style="grid-column:1/-1"><div class="card-title"><h3>시스템</h3><button class="btn danger sm" id="restart">서버 프로세스 재시작</button></div><dl class="kv"><dt>버전</dt><dd>HALCYON 홈 서버 콘솔 v${esc(s.system.version)}</dd><dt>Node.js</dt><dd>${esc(s.system.node)}</dd><dt>데이터 폴더</dt><dd class="mono">${esc(s.system.dataDir)}</dd><dt>바인딩</dt><dd class="mono">${esc(s.system.host)}:${s.system.port}</dd><dt>PID</dt><dd>${s.system.pid}</dd><dt>가동 시간</dt><dd>${fmtDur(s.system.uptime)}</dd></dl>
         <p class="dim small mt">환경 변수: <code>PORT</code> (기본 3000), <code>HOST</code> (기본 0.0.0.0), <code>DATA_DIR</code> (기본 ./data). 리버스 프록시(nginx/caddy)로 HTTPS 를 붙이고 "리버스 프록시" 옵션을 켜는 것을 권장합니다.</p></div>
     </div>`;
     $('#siteForm').onsubmit = async (e) => { e.preventDefault(); await api.put('/api/admin/settings', formValues(e.target)); state.auth = await api.get('/api/auth/state'); $('#brandName').textContent = state.auth.siteName; toast('저장했습니다', 'ok'); };

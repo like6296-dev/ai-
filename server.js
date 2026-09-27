@@ -1,6 +1,6 @@
 'use strict';
 /*
- * Server Hub — 서버 관리 사이트 (외부 의존성 없음, Node.js 18+)
+ * HALCYON 홈 서버 콘솔 — 서버 관리 사이트 (외부 의존성 없음, Node.js 18+)
  * 점검 모드 · 게임 연동(키/하트비트/브로드캐스트) · VPN(WireGuard) · 가상 저장소 · 가상 머신 · 예약 작업 · 백업 · 네트워크 도구 · 모니터링
  */
 const http = require('http');
@@ -35,7 +35,7 @@ const defaults = () => ({
   sessions: {},
   tokens: [],
   settings: {
-    siteName: 'Server Hub',
+    siteName: 'HALCYON',
     description: '서버 상태와 공지를 확인할 수 있는 페이지입니다.',
     publicHost: '',
     discordWebhook: '',
@@ -203,7 +203,7 @@ route('GET', '/api/auth/state', async (r) => {
 route('POST', '/api/auth/setup', async (r) => {
   const b = await readJson(r.req);
   auth.setup(b.username, b.password);
-  if (b.siteName) ctx.db.settings.siteName = str(b.siteName, 60).trim() || 'Server Hub';
+  if (b.siteName) ctx.db.settings.siteName = str(b.siteName, 60).trim() || 'HALCYON';
   const sid = auth.createSession(r.ip);
   setCookie(r.res, 'sid', sid, { maxAge: 7 * 86400, secure: r.secure });
   ctx.audit('info', 'auth', `초기 설정 완료 (관리자 ${b.username})`, r.ip);
@@ -322,7 +322,7 @@ admin('GET', '/api/admin/settings', async () => settingsView());
 admin('PUT', '/api/admin/settings', async (r) => {
   const b = await readJson(r.req);
   const s = ctx.db.settings;
-  if (b.siteName !== undefined) s.siteName = str(b.siteName, 60).trim() || 'Server Hub';
+  if (b.siteName !== undefined) s.siteName = str(b.siteName, 60).trim() || 'HALCYON';
   if (b.description !== undefined) s.description = str(b.description, 500);
   if (b.publicHost !== undefined) s.publicHost = str(b.publicHost, 253).trim();
   if (b.discordWebhook !== undefined) s.discordWebhook = str(b.discordWebhook, 400).trim();
@@ -594,7 +594,7 @@ server.requestTimeout = 0;
 server.headersTimeout = 60000;
 
 server.listen(PORT, HOST, () => {
-  ctx.audit('info', 'system', `Server Hub v${VERSION} 시작 — http://${HOST === '0.0.0.0' ? 'localhost' : HOST}:${PORT} (데이터: ${DATA_DIR})`);
+  ctx.audit('info', 'system', `HALCYON 홈 서버 콘솔 v${VERSION} 시작 — http://${HOST === '0.0.0.0' ? 'localhost' : HOST}:${PORT} (데이터: ${DATA_DIR})`);
   if (!auth.isSetup()) console.log('▶ 초기 설정: 브라우저에서 /admin 으로 접속해 관리자 계정을 만드세요.');
 });
 

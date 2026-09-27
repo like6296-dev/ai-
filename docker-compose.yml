@@ -1,7 +1,7 @@
 services:
-  server-hub:
+  halcyon:
     build: .
-    container_name: server-hub
+    container_name: halcyon
     restart: unless-stopped
     ports:
       - "3000:3000"
