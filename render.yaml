@@ -1,0 +1,24 @@
+# Render Blueprint — "Deploy to Render" 버튼용
+# https://render.com/deploy?repo=https://github.com/like6296-dev/ai-
+services:
+  - type: web
+    name: halcyon
+    runtime: node
+    plan: free
+    buildCommand: "echo no build step"
+    startCommand: node server.js
+    healthCheckPath: /api/public/status
+    autoDeploy: true
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: DATA_DIR
+        value: ./data
+      - key: TRUST_PROXY
+        value: "1"
+      - key: ADMIN_USER
+        value: admin
+      - key: ADMIN_PASSWORD
+        sync: false   # 배포 화면에서 직접 입력 (6자 이상)
+      - key: SITE_NAME
+        value: HALCYON

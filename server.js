@@ -19,6 +19,7 @@ const { VmManager } = require('./lib/vm');
 const { Games } = require('./lib/games');
 const { Scheduler, ACTIONS, ACTION_LABELS } = require('./lib/scheduler');
 const { Backup } = require('./lib/backup');
+const { Device } = require('./lib/device');
 const nettools = require('./lib/nettools');
 
 const PORT = Number(process.env.PORT) || 3000;
@@ -45,6 +46,7 @@ const defaults = () => ({
     vpn: { interface: 'wg0', address: '10.8.0.1/24', port: 51820, endpoint: '', dns: '1.1.1.1', allowedIps: '0.0.0.0/0, ::/0', nat: true, natInterface: 'eth0', mtu: 0, privateKey: '', publicKey: '' },
     vm: { defaultBackend: 'auto' },
   },
+  device: { name: 'HALCYON-01', location: '서울 랙 A-12 · U7', model: 'HALCYON Home Node', bays: 4, power: 'on', bootedAt: null, bootPhase: null, bootLog: [], bootStep: 0, bootTotal: 0, services: [], volumes: [], firewall: { enabled: true, rules: [], policy: 'deny' }, alerts: [], raised: {}, seeded: false, volumeWarnAt: 90 },
   announcements: [],
   games: [],
   keys: [],
@@ -80,6 +82,8 @@ const vpn = new Vpn(ctx);
 const vms = new VmManager(ctx);
 const games = new Games(ctx);
 const backup = new Backup(ctx);
+const device = new Device(ctx, { monitor, notify });
+ctx.device = device;
 
 // ---------------------------------------------------------------- 점검 모드
 const maint = () => ctx.db.settings.maintenance;
@@ -99,6 +103,7 @@ function setMaintenance(patch, who = 'admin') {
   store.save();
   if (m.enabled !== wasOn) {
     ctx.audit('warn', 'maintenance', `점검 모드 ${m.enabled ? '시작' : '종료'} (${who})${m.enabled && m.until ? ' · 예상 종료 ' + new Date(m.until).toLocaleString('ko-KR') : ''}`);
+    device.addAlert(m.enabled ? 'warn' : 'ok', m.enabled ? '점검 모드 시작' : '점검 모드 종료', m.enabled ? `${m.title} (${who})` : `서비스 정상 운영 재개 (${who})`, null);
     notify.fire(m.enabled ? '🔧 점검 모드 시작' : '✅ 점검 모드 종료', m.enabled ? `${m.title}\n${m.message}${m.until ? `\n예상 종료: ${new Date(m.until).toLocaleString('ko-KR')}` : ''}` : '서비스가 정상 운영 중입니다.', m.enabled ? 'maint' : 'ok');
   }
   return m;
@@ -474,6 +479,30 @@ admin('GET', '/api/admin/net/publicip', async () => nettools.publicIp());
 admin('GET', '/api/admin/net/listening', async () => nettools.listening());
 admin('GET', '/api/admin/net/interfaces', async () => nettools.interfaces());
 
+// ------------------------------------------------ 관리자: HALCYON-01 장치 콘솔
+admin('GET', '/api/admin/device', async () => device.status());
+admin('PUT', '/api/admin/device', async (r) => { device.updateInfo(await readJson(r.req)); return device.status(); });
+admin('POST', '/api/admin/device/services', async (r) => device.addService(await readJson(r.req)));
+admin('PUT', '/api/admin/device/services/:id', async (r) => device.updateService(r.params.id, await readJson(r.req)));
+admin('DELETE', '/api/admin/device/services/:id', async (r) => { device.removeService(r.params.id); return { ok: true }; });
+admin('POST', '/api/admin/device/services/:id/:action', async (r) => device.serviceAction(r.params.id, r.params.action));
+admin('POST', '/api/admin/device/volumes', async (r) => device.addVolume(await readJson(r.req)));
+admin('PUT', '/api/admin/device/volumes/:id', async (r) => device.updateVolume(r.params.id, await readJson(r.req)));
+admin('DELETE', '/api/admin/device/volumes/:id', async (r) => { device.removeVolume(r.params.id); return { ok: true }; });
+admin('PUT', '/api/admin/device/firewall', async (r) => { const b = await readJson(r.req); return { enabled: await device.setFirewall(!!b.enabled) }; });
+admin('POST', '/api/admin/device/firewall/rules', async (r) => device.addRule(await readJson(r.req)));
+admin('DELETE', '/api/admin/device/firewall/rules/:id', async (r) => { await device.removeRule(r.params.id); return { ok: true }; });
+admin('POST', '/api/admin/device/power', async (r) => { const b = await readJson(r.req); await device.power(b.action, { real: !!b.real }); return device.status(); });
+admin('POST', '/api/admin/device/alerts/ack-all', async () => ({ acked: device.ackAll() }));
+admin('POST', '/api/admin/device/alerts/clear-acked', async () => ({ removed: device.clearAcked() }));
+admin('POST', '/api/admin/device/alerts/:id/ack', async (r) => device.ack(r.params.id));
+admin('DELETE', '/api/admin/device/alerts/:id', async (r) => { device.removeAlert(r.params.id); return { ok: true }; });
+admin('POST', '/api/admin/device/cli', async (r) => {
+  const b = await readJson(r.req);
+  try { return await device.cli(String(b.line || '').slice(0, 2000), { setMaintenance, vms: { list: () => ctx.db.vms, start: (id) => vms.start(id), stop: (id) => vms.stop(id) }, nettools }); }
+  catch (e) { if (e instanceof HttpError) return { output: '오류: ' + e.message, error: true }; throw e; }
+});
+
 // ------------------------------------------------ 관리자: 로그
 admin('GET', '/api/admin/logs', async (r) => {
   const type = r.query.get('type'), level = r.query.get('level'), q = (r.query.get('q') || '').toLowerCase();
@@ -592,6 +621,19 @@ const server = http.createServer((req, res) => {
 });
 server.requestTimeout = 0;
 server.headersTimeout = 60000;
+
+// 환경 변수로 초기 관리자/설정 부트스트랩 (Render 등 디스크가 초기화되는 호스팅용)
+if (!auth.isSetup() && process.env.ADMIN_PASSWORD) {
+  try {
+    auth.setup(process.env.ADMIN_USER || 'admin', process.env.ADMIN_PASSWORD);
+    ctx.audit('info', 'auth', `환경 변수로 관리자 계정 생성 (${process.env.ADMIN_USER || 'admin'})`);
+  } catch (e) { console.error('ADMIN_PASSWORD 부트스트랩 실패:', e.message); }
+}
+if (process.env.SITE_NAME && ctx.db.settings.siteName === 'HALCYON') ctx.db.settings.siteName = str(process.env.SITE_NAME, 60);
+if (/^(1|true|yes)$/i.test(process.env.TRUST_PROXY || '')) ctx.db.settings.trustProxy = true;
+if (process.env.PUBLIC_HOST && !ctx.db.settings.publicHost) ctx.db.settings.publicHost = str(process.env.PUBLIC_HOST, 253);
+if (process.env.RENDER_EXTERNAL_HOSTNAME && !ctx.db.settings.publicHost) ctx.db.settings.publicHost = process.env.RENDER_EXTERNAL_HOSTNAME;
+store.save();
 
 server.listen(PORT, HOST, () => {
   ctx.audit('info', 'system', `HALCYON 홈 서버 콘솔 v${VERSION} 시작 — http://${HOST === '0.0.0.0' ? 'localhost' : HOST}:${PORT} (데이터: ${DATA_DIR})`);
