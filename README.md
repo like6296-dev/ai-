@@ -14,13 +14,22 @@ npm start            # http://localhost:3000
 | 경로 | 설명 |
 |---|---|
 | `/` | 공개 페이지 (사이트 상태 · 공지 · 게임 접속자 수) — 점검 중이면 503 점검 페이지 |
-| `/admin` | HALCYON 관리자 콘솔 |
+| `/admin` | HALCYON 관리자 콘솔 (첫 화면: HALCYON-01 장치 콘솔) |
 | `/maintenance?preview=1` | 점검 페이지 미리보기 |
 | `/s/<token>` | 가상 저장소 공유 링크 |
 | `/api/game/*` | 게임 스크립트용 API (게임 API 키 인증) |
 | `/api/admin/*` | 관리자 API (세션 쿠키 또는 `Authorization: Bearer <토큰>`) |
 
 ## 기능
+
+### 🛰️ HALCYON-01 장치 콘솔 (기본 화면)
+- 서울 랙의 **HALCYON-01** 한 대를 살아 있는 장치처럼 보여줍니다. CPU·메모리·네트워크가 실시간으로 움직이고, 앞면 **베이 LED 가 부하에 맞춰 깜빡이며**, OLED 패널에 IP·업타임·부하가 표시됩니다
+- **서비스**: Caddy, PostgreSQL, Redis, Immich, Home Assistant, Samba, Docker, SSH 를 켜고 끄고 재시작. `systemctl`/`docker` 가 있고 해당 unit·컨테이너가 존재하면 **실제로 제어**하고, 없으면 시뮬레이션으로 동작 (서비스 추가·편집 가능)
+- **저장소**: 실제 디스크 사용량 + 가상 볼륨(NAS 등). 임계값(기본 90%)을 넘으면 `/data 92%` 처럼 경고 알림 생성
+- **네트워크 · 방화벽**: 방화벽 토글과 규칙 관리. `ufw` 가 있으면 실제 적용, 없으면 시뮬레이션
+- **전원 버튼**: 재부팅을 누르면 BMC 시퀀스(서비스 정지 → 전원 차단 → POST → UEFI → 커널 → 서비스 시작)가 OLED 에 흐르고 다시 올라옵니다. 체크박스로 **실제 OS 재부팅**도 가능
+- **알림**: 볼륨 경고·서비스 실패·점검 모드·재부팅 완료 등. "확인"을 누르면 **서버에 저장**되어 새로고침·다른 기기에서도 확인 상태가 유지됩니다
+- **명령줄**: `status`, `restart redis`, `df`, `top`, `fw off`, `alerts`, `ack all`, `reboot`, `maint on 30`, `vm list`, `ping`, `port`, `sh <명령>`, `help` 등. ↑↓ 로 기록 탐색
 
 ### 🔧 점검 모드
 - 스위치 하나로 ON/OFF. 켜면 공개 페이지·공유 링크가 **HTTP 503 + 점검 페이지**(`Retry-After` 포함)로 응답
@@ -113,7 +122,7 @@ HTTPS 는 nginx/caddy 리버스 프록시를 앞에 두는 것을 권장합니�
 
 ```
 server.js          HTTP 서버 · 라우팅 · 점검 게이트
-lib/               auth, monitor, storage, vpn, vm, games, scheduler(cron), backup, nettools, notify
+lib/               device(장치 콘솔), auth, monitor, storage, vpn, vm, games, scheduler(cron), backup, nettools, notify
 public/site.html   공개 페이지
 public/maintenance.html  점검 페이지
 public/admin/      HALCYON 관리자 SPA (index.html, app.js, style.css)

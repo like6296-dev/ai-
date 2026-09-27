@@ -42,6 +42,7 @@ function spark(values, { max, color = 'var(--accent)', w = 200, h = 46 } = {}) {
 }
 
 const ICONS = {
+  device: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="7" rx="2"/><rect x="2" y="13" width="20" height="7" rx="2"/><path d="M6 7.5h.01M6 16.5h.01"/></svg>',
   dashboard: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>',
   maintenance: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>',
   announcements: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 11 18-5v12L3 13v-2z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg>',
@@ -130,6 +131,8 @@ function fields(defs) {
 // ------------------------------------------------------------ 상태 & 셸
 const state = { auth: null, route: '', param: '', timers: [], storagePath: '/', mobileNav: false };
 const NAV = [
+  { sep: '장치' },
+  { id: 'device', label: 'HALCYON-01 콘솔' },
   { sep: '운영' },
   { id: 'dashboard', label: '대시보드' }, { id: 'maintenance', label: '점검 모드' }, { id: 'announcements', label: '공지사항' }, { id: 'games', label: '게임 연동' },
   { sep: '서버 기능' },
@@ -193,7 +196,7 @@ function renderSetup(app) {
     e.preventDefault();
     const v = formValues(e.target);
     if (v.password !== v.password2) return toast('비밀번호가 일치하지 않습니다', 'error');
-    try { await api.post('/api/auth/setup', v, { noAuthRedirect: true }); state.auth = await api.get('/api/auth/state'); location.hash = '#/dashboard'; renderShell(); toast('환영합니다! 초기 설정이 완료되었습니다', 'ok'); }
+    try { await api.post('/api/auth/setup', v, { noAuthRedirect: true }); state.auth = await api.get('/api/auth/state'); location.hash = '#/device'; renderShell(); toast('환영합니다! 초기 설정이 완료되었습니다', 'ok'); }
     catch (err) { toast(err.message, 'error'); }
   };
 }
@@ -203,7 +206,7 @@ function renderLogin(app) {
     <button class="btn primary mt" type="submit">로그인</button><a href="/" class="small dim" style="text-align:center">← 공개 사이트로</a></form></div></div>`;
   $('#loginForm').onsubmit = async (e) => {
     e.preventDefault();
-    try { await api.post('/api/auth/login', formValues(e.target), { noAuthRedirect: true }); state.auth = await api.get('/api/auth/state'); if (location.hash === '#/login' || !location.hash) location.hash = '#/dashboard'; renderShell(); }
+    try { await api.post('/api/auth/login', formValues(e.target), { noAuthRedirect: true }); state.auth = await api.get('/api/auth/state'); if (location.hash === '#/login' || !location.hash) location.hash = '#/device'; renderShell(); }
     catch (err) { toast(err.message, 'error'); }
   };
 }
@@ -211,14 +214,15 @@ function renderLogin(app) {
 async function route() {
   if (!state.auth || !state.auth.authed) { if (state.auth && state.auth.setup && location.hash !== '#/login') { /* stay */ } return; }
   const [id, ...rest] = (location.hash.replace(/^#\/?/, '') || 'dashboard').split('/');
-  const view = views[id] || views.dashboard;
-  state.route = views[id] ? id : 'dashboard';
+  const view = views[id] || views.device;
+  state.route = views[id] ? id : 'device';
   state.param = rest.join('/');
   clearTimers();
   every(10000, refreshTopStatus);
   $$('[data-nav]').forEach((a) => a.classList.toggle('active', a.dataset.nav === state.route));
   const nav = NAV.find((n) => n.id === state.route);
   $('#pageTitle').textContent = view.title || (nav && nav.label) || '';
+  if (state.route !== 'device') sessionStorage.setItem('halcyon.lastRoute', state.route);
   const el = $('#view');
   el.innerHTML = '<div class="muted">불러오는 중…</div>';
   try { await view.render(el, state.param); }
@@ -889,6 +893,166 @@ views.settings = {
     $('#addToken').onclick = async () => { const v = await modal({ title: 'API 토큰 생성', body: fields([{ name: 'name', label: '이름', required: true, full: true }]), submit: '생성', onSubmit: (v) => api.post('/api/admin/tokens', v) }); if (v) { await modal({ title: '토큰이 생성되었습니다', body: `<p class="muted small">이 토큰은 지금만 표시됩니다. 안전한 곳에 보관하세요.</p><pre class="code">${esc(v.token)}</pre>`, submit: '복사', cancel: '닫기', onSubmit: () => { copy(v.token); return true; } }); route(); } };
     $('#tokRows').onclick = async (e) => { if (e.target.closest('[data-del]')) { await api.del(`/api/admin/tokens/${e.target.closest('tr').dataset.t}`); route(); } };
     $('#restart').onclick = async () => { if (await confirmDlg('서버 재시작', '프로세스를 종료합니다. systemd/pm2/docker 같은 감시 프로세스가 있어야 자동으로 다시 시작됩니다.', { submit: '재시작' })) { const r = await api.post('/api/admin/restart'); toast(r.message, 'warn', 6000); } };
+  },
+};
+
+
+// ------------------------------------------------------------ HALCYON-01 장치 콘솔
+const POWER_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 3v9"/><path d="M6.3 6.3a8 8 0 1 0 11.4 0"/></svg>';
+views.device = {
+  title: 'HALCYON-01 장치 콘솔',
+  async render(el) {
+    const phases = [];
+    let last = null, cliHistory = [], cliIdx = -1;
+    el.innerHTML = `
+    <div class="card mb" id="chassisCard" style="padding:14px 16px">
+      <div class="row between mb" style="margin-bottom:10px"><div class="row"><span class="rack-label" id="rackLabel">RACK</span><span class="badge" id="powerBadge"></span><span class="badge" id="maintBadge"></span></div><div class="row"><button class="btn ghost xs" id="editDevice">장치 정보</button></div></div>
+      <div class="chassis">
+        <div class="ear"><i></i><i></i></div>
+        <div class="faceplate">
+          <div class="bays" id="bays"></div>
+          <div class="oled" id="oled"></div>
+          <div class="panel-leds" id="panelLeds"></div>
+          <button class="power-btn" id="powerBtn" title="전원">${POWER_ICON}</button>
+        </div>
+        <div class="ear"><i></i><i></i></div>
+      </div>
+    </div>
+    <div class="grid stats mb" id="devStats"></div>
+    <div class="grid cols-2 mb">
+      <div class="card"><div class="card-title"><h3>서비스 <span class="muted small" id="svcCount"></span></h3><div class="row"><button class="btn ghost xs" id="restartAll">전체 재시작</button><button class="btn primary sm" id="addSvc">+ 서비스</button></div></div><div class="svc-grid" id="svcGrid"></div></div>
+      <div class="card"><div class="card-title"><h3>저장소</h3><button class="btn sm" id="addVol">+ 가상 볼륨</button></div><div id="volList"></div></div>
+    </div>
+    <div class="grid cols-2 mb">
+      <div class="card"><div class="card-title"><h3>네트워크 · 방화벽</h3><label class="switch" title="방화벽"><input type="checkbox" id="fwSwitch"><span></span></label></div><div id="netBox"></div></div>
+      <div class="card"><div class="card-title"><h3>알림 <span class="badge danger hidden" id="alertCount"></span></h3><div class="row"><button class="btn ghost xs" id="ackAll">모두 확인</button><button class="btn ghost xs" id="clearAcked">확인된 항목 지우기</button></div></div><div id="alertList"></div></div>
+    </div>
+    <div class="card"><div class="card-title"><h3>명령줄</h3><span class="dim small">help · status · restart redis · df · fw off · reboot · sh uname -a</span></div>
+      <div class="cli"><div class="cli-out" id="cliOut"><span class="m">HALCYON-01 콘솔. 'help' 를 입력하면 명령 목록이 나옵니다.</span>\n</div>
+      <div class="cli-in"><span class="prompt" id="cliPrompt">admin@halcyon-01:~$</span><input id="cliIn" autocomplete="off" spellcheck="false" placeholder="명령 입력…"><span class="hint">↑↓ 기록</span></div></div></div>`;
+
+    const bayNames = (n) => Array.from({ length: n }, (_, i) => `NVMe ${i + 1}`);
+    const draw = (d) => {
+      last = d;
+      const dev = d.device, m = d.monitor, on = dev.power === 'on';
+      const cpu = m.cpu.usage, memP = pct(m.mem.used, m.mem.total);
+      $('#rackLabel').textContent = `${dev.location} · ${dev.model}`;
+      $('#powerBadge').className = 'badge ' + (on ? 'ok live' : dev.power === 'off' ? '' : 'warn live');
+      $('#powerBadge').innerHTML = `<span class="dot"></span>${on ? '온라인' : dev.power === 'off' ? '전원 꺼짐' : dev.power === 'rebooting' ? '재부팅 중' : dev.power === 'booting' ? '부팅 중' : '종료 중'}`;
+      $('#maintBadge').className = 'badge ' + (d.maintenance ? 'warn' : 'hidden');
+      $('#maintBadge').textContent = '점검 모드';
+      // 베이 LED — CPU 부하가 높을수록 빠르게 깜빡임
+      const period = Math.max(110, 1100 - cpu * 9);
+      $('#bays').style.gridTemplateColumns = `repeat(${Math.min(dev.bays, 6)}, 1fr)`;
+      $('#bays').innerHTML = bayNames(dev.bays).map((n, i) => `<div class="bay ${on ? '' : 'off'}"><i class="led" style="--d:${Math.round(period * (0.85 + (i % 3) * 0.12))}ms;--p:${i * 137 % 700}ms"></i><b>${n}</b><small>${on ? (i === 0 ? 'SYSTEM' : 'DATA') : 'STANDBY'}</small></div>`).join('');
+      // OLED
+      if (on) {
+        $('#oled').innerHTML = `<span class="h">${esc(dev.name)}</span> <span class="dim">${esc(dev.hostname)}</span>\nIP  ${esc(dev.ips.map((x) => x.address).join(' ') || '—')}\nUP  ${fmtDur(dev.uptime)}  LOAD ${m.loadavg.map((x) => x.toFixed(2)).join(' ')}\nCPU ${cpu.toFixed(0).padStart(3)}%  MEM ${String(memP).padStart(3)}%  NET ↓${fmtBytes(m.net.rxRate, 0)}/s\n<span class="dim">${esc(dev.kernel)}</span>`;
+      } else {
+        const lines = (dev.bootLog || []).slice(-5).map((l) => `<span class="dim">[${esc(l.src)}]</span> ${esc(l.msg)}`).join('\n');
+        $('#oled').innerHTML = `<span class="h">${esc(dev.name)}</span> <span class="dim">BMC</span>\n${lines || (dev.power === 'off' ? '<span class="dim">전원 꺼짐 — 전원 버튼을 누르세요</span>' : '…')}${dev.bootTotal ? `<div class="bar"><i style="width:${pct(dev.bootStep, dev.bootTotal)}%"></i></div>` : ''}`;
+      }
+      // 패널 LED
+      const netRate = m.net.rxRate + m.net.txRate;
+      const netD = netRate > 0 ? Math.max(90, 800 - Math.log10(netRate + 1) * 110) : 0;
+      $('#panelLeds').innerHTML = `<div class="led-row"><i class="pled ${on ? 'on' : dev.power === 'off' ? 'amber' : 'amber blink'}" style="--d:700ms"></i>PWR</div><div class="led-row"><i class="pled ${on && netD ? 'cyan blink' : on ? 'cyan' : ''}" style="--d:${Math.round(netD || 500)}ms"></i>NET</div><div class="led-row"><i class="pled ${!on ? (dev.power === 'off' ? '' : 'amber blink') : d.unacked ? 'amber blink' : d.services.some((s) => s.state === 'failed') ? 'red blink' : 'on'}" style="--d:900ms"></i>STAT</div><div class="led-row"><i class="pled ${on && cpu > 70 ? 'red blink' : on && cpu > 35 ? 'amber blink' : on ? 'on' : ''}" style="--d:${Math.round(period)}ms"></i>LOAD</div>`;
+      const pb = $('#powerBtn'); pb.className = 'power-btn ' + (on ? '' : dev.power === 'off' ? 'off' : 'busy'); pb.title = on ? '재부팅 / 전원 끄기' : dev.power === 'off' ? '전원 켜기' : '시퀀스 진행 중';
+      // 통계 타일
+      $('#devStats').innerHTML = `
+        <div class="stat"><div class="k"><span>CPU</span><span>${m.cpu.cores} 코어</span></div><div class="v">${cpu.toFixed(0)}%</div><div class="s">${esc(m.cpu.model.slice(0, 34))}</div>${spark(m.history.cpu, { max: 100 })}</div>
+        <div class="stat"><div class="k"><span>메모리</span><span>${fmtBytes(m.mem.total, 0)}</span></div><div class="v">${memP}%</div><div class="s">${fmtBytes(m.mem.used)} 사용</div>${spark(m.history.mem, { max: 100, color: '#8f6bff' })}</div>
+        <div class="stat"><div class="k"><span>네트워크 ↓</span><span>↑ ${fmtRate(m.net.txRate)}</span></div><div class="v" style="font-size:20px">${fmtRate(m.net.rxRate)}</div><div class="s">${dev.ips[0] ? dev.ips[0].name + ' ' + dev.ips[0].address : '—'}</div>${spark(m.history.rx, { color: '#22d3ee' })}</div>
+        <div class="stat"><div class="k"><span>서비스</span><span>${d.services.length}개</span></div><div class="v">${d.services.filter((s) => s.state === 'running').length}<span class="muted" style="font-size:14px;font-weight:400"> 실행 중</span></div><div class="s">${d.services.filter((s) => s.state === 'failed').length ? '<span class="danger">실패 ' + d.services.filter((s) => s.state === 'failed').length + '개</span>' : '이상 없음'}</div></div>
+        <div class="stat"><div class="k"><span>가동 시간</span><span>${on ? '온라인' : '오프라인'}</span></div><div class="v" style="font-size:20px">${on ? fmtDur(dev.uptime) : '—'}</div><div class="s">알림 ${d.unacked}건 미확인</div></div>`;
+      // 서비스
+      $('#svcCount').textContent = `(${d.services.filter((s) => s.state === 'running').length}/${d.services.length} 실행)`;
+      $('#svcGrid').innerHTML = d.services.map((s) => { const busy = ['starting', 'stopping', 'restarting'].includes(s.state); return `<div class="svc ${s.state} ${busy ? 'busy' : ''}" data-svc="${s.id}"><div class="top"><span class="ico">${esc(s.icon || '⚙️')}</span><div class="grow"><div class="nm">${esc(s.name)}</div><div class="meta">${esc(s.unit)}${s.port ? ' :' + s.port : ''} · ${s.backend === 'simulated' ? '가상' : s.backend}</div></div><span class="badge ${s.state === 'running' ? 'ok' : s.state === 'failed' ? 'danger' : busy ? 'warn live' : ''}">${busy ? '<span class="dot"></span>' : ''}${esc(s.stateLabel)}</span></div>${s.desc ? `<div class="dim small">${esc(s.desc)}</div>` : ''}${s.lastError ? `<div class="danger small">${esc(s.lastError)}</div>` : ''}<div class="acts">${s.type === 'self' ? '<span class="dim small">콘솔 자체</span>' : `${s.state === 'running' || busy ? `<button class="btn xs warn" data-act="stop" ${busy || !on ? 'disabled' : ''}>■ 정지</button><button class="btn xs" data-act="restart" ${busy || !on ? 'disabled' : ''}>↻ 재시작</button>` : `<button class="btn xs ok" data-act="start" ${busy || !on ? 'disabled' : ''}>▶ 시작</button>`}<button class="btn xs ghost" data-act="edit" style="margin-left:auto">⋯</button>`}</div></div>`; }).join('');
+      // 볼륨
+      $('#volList').innerHTML = d.volumes.map((v) => `<div class="vol ${v.percent >= 97 ? 'danger' : v.percent >= v.warnAt ? 'warn' : ''}" data-vol="${v.id}"><div class="row between small"><span><b>${esc(v.name)}</b> <span class="dim">${v.backend === 'simulated' ? '가상' : esc(v.fs || '')}${v.mount !== v.name ? ' · ' + esc(v.mount) : ''}</span></span><span class="muted">${fmtBytes(v.used, 1)} / ${fmtBytes(v.total, 1)} · <b class="${v.percent >= v.warnAt ? 'warn' : ''}">${v.percent}%</b></span></div><div class="bar mt-s"><i style="width:${v.percent}%"></i></div><div class="row between small mt-s"><span class="${v.percent >= v.warnAt ? 'warn' : 'dim'}">${v.percent >= v.warnAt ? `⚠ 경고 임계값 ${v.warnAt}% 초과 · ${fmtBytes(v.total - v.used, 0)} 남음` : `${fmtBytes(v.total - v.used, 0)} 남음`}${v.note ? ' · ' + esc(v.note) : ''}</span>${v.backend === 'simulated' ? '<span><button class="btn xs ghost" data-act="edit">편집</button><button class="btn xs ghost danger" data-act="del">삭제</button></span>' : ''}</div></div>`).join('') || '<div class="empty">볼륨 없음</div>';
+      // 네트워크 / 방화벽
+      const fw = d.firewall;
+      $('#fwSwitch').checked = fw.enabled;
+      $('#netBox').innerHTML = `<div class="row between small mb"><span>방화벽 <b class="${fw.enabled ? 'ok' : 'danger'}">${fw.enabled ? '활성' : '비활성'}</b> <span class="dim">(${fw.backend === 'ufw' ? 'ufw' : '시뮬레이션'} · 기본 인바운드 차단)</span></span><span class="dim">↓ ${fmtRate(m.net.rxRate)} · ↑ ${fmtRate(m.net.txRate)}</span></div>${fw.note ? `<div class="warn small mb">${esc(fw.note)}</div>` : ''}
+        <div class="table-wrap"><table><thead><tr><th>정책</th><th>포트</th><th>출발지</th><th>메모</th><th class="right"><button class="btn xs" id="addRule">+ 규칙</button></th></tr></thead><tbody id="ruleRows">${fw.rules.map((r) => `<tr data-rule="${r.id}"><td><span class="badge ${r.action === 'allow' ? 'ok' : 'danger'}">${r.action}</span></td><td class="mono">${r.port}/${r.proto}</td><td class="mono small">${esc(r.from)}</td><td class="small muted">${esc(r.note || '')}</td><td class="right"><button class="btn xs ghost danger" data-act="delrule">✕</button></td></tr>`).join('') || '<tr><td colspan="5" class="dim small" style="border:0">규칙 없음</td></tr>'}</tbody></table></div>
+        <div class="row small mt" style="gap:14px">${dev.ips.map((i) => `<span class="mono"><span class="dim">${esc(i.name)}</span> ${esc(i.address)}</span>`).join('') || '<span class="dim">외부 인터페이스 없음</span>'}</div>`;
+      // 알림
+      $('#alertCount').className = 'badge danger ' + (d.unacked ? '' : 'hidden'); $('#alertCount').textContent = d.unacked;
+      $('#alertList').innerHTML = d.alerts.map((a) => `<div class="alert ${a.level} ${a.acked ? 'acked' : ''}" data-alert="${a.id}"><span class="dot"></span><div class="grow"><div class="t">${esc(a.title)}</div><div class="x">${esc(a.text)}</div><div class="dim small">${fmtDate(a.ts)}${a.acked ? ` · 확인됨 ${ago(a.ackedAt)}` : ''}</div></div>${a.acked ? '<button class="btn xs ghost" data-act="del">✕</button>' : '<button class="btn xs ok" data-act="ack">확인</button>'}</div>`).join('') || '<div class="empty">알림 없음</div>';
+    };
+
+    const refresh = async () => { try { draw(await api.get('/api/admin/device')); } catch (e) { /* keep last */ } };
+    draw(await api.get('/api/admin/device'));
+
+    // ---- 이벤트
+    $('#editDevice').onclick = async () => { const dev = last.device; const v = await modal({ title: '장치 정보', body: fields([{ name: 'name', label: '장치 이름', value: dev.name }, { name: 'bays', label: '드라이브 베이 수', type: 'number', value: dev.bays, min: 1, max: 12 }, { name: 'location', label: '위치 (랙 · 유닛)', value: dev.location, full: true }, { name: 'model', label: '모델', value: dev.model, full: true }, { name: 'volumeWarnAt', label: '실제 디스크 경고 임계값 (%)', type: 'number', value: 90, min: 50, max: 99 }]), submit: '저장', onSubmit: (v) => api.put('/api/admin/device', v) }); if (v) refresh(); };
+    $('#powerBtn').onclick = async () => {
+      const dev = last.device;
+      if (dev.power === 'off') { await api.post('/api/admin/device/power', { action: 'on' }); toast('전원을 켭니다', 'ok'); return refresh(); }
+      if (dev.power !== 'on') return toast('전원 시퀀스가 진행 중입니다', 'warn');
+      const v = await modal({ title: '전원', body: `<p class="muted small">재부팅은 기본적으로 BMC 시퀀스를 시뮬레이션합니다. 시뮬레이션은 가상 서비스만 내렸다 올리며 실제 시스템에는 영향이 없습니다.</p>` + fields([{ name: 'action', label: '동작', type: 'select', value: 'reboot', options: [{ value: 'reboot', label: '재부팅 (BMC 시퀀스)' }, { value: 'off', label: '전원 끄기 (시뮬레이션)' }], full: true }, { name: 'real', label: '⚠ 실제 OS 재부팅 실행 (systemctl reboot — 이 서버가 실제로 재부팅됩니다)', type: 'checkbox', value: false, full: true }]), submit: '실행', danger: true });
+      if (!v) return;
+      if (v.real && !await confirmDlg('실제 재부팅', '정말로 이 서버를 재부팅합니까? 콘솔 연결이 끊기고 모든 서비스가 내려갑니다.', { submit: '재부팅' })) return;
+      try { await api.post('/api/admin/device/power', { action: v.action, real: v.action === 'reboot' && v.real }); toast(v.action === 'reboot' ? 'BMC 재부팅 시퀀스를 시작했습니다' : '전원 끄기 시퀀스를 시작했습니다', 'warn'); } catch (e) { toast(e.message, 'error'); }
+      refresh();
+    };
+    const svcForm = (s = {}) => fields([{ name: 'name', label: '이름', value: s.name, required: true }, { name: 'icon', label: '아이콘 (이모지)', value: s.icon ?? '⚙️' }, { name: 'unit', label: 'systemd unit / 컨테이너 이름', value: s.unit, required: true, mono: true, placeholder: 'nginx' }, { name: 'port', label: '포트', type: 'number', value: s.port ?? 0 }, { name: 'type', label: '백엔드', type: 'select', value: s.type ?? 'auto', options: [{ value: 'auto', label: '자동 감지 (systemd → docker → 가상)' }, { value: 'systemd', label: 'systemd' }, { value: 'docker', label: 'Docker 컨테이너' }, { value: 'simulated', label: '가상 (시뮬레이션)' }] }, { name: 'autostart', label: '부팅 시 자동 시작', type: 'checkbox', value: s.autostart ?? true }, { name: 'desc', label: '설명', value: s.desc, full: true }]);
+    $('#addSvc').onclick = async () => { const v = await modal({ title: '서비스 추가', body: svcForm(), submit: '추가', onSubmit: (v) => api.post('/api/admin/device/services', v) }); if (v) { toast(`${v.name} 추가됨`, 'ok'); refresh(); } };
+    $('#restartAll').onclick = async () => { if (!await confirmDlg('전체 재시작', '콘솔을 제외한 모든 서비스를 재시작할까요?', { submit: '재시작', danger: false })) return; for (const s of last.services) if (s.type !== 'self' && s.state === 'running') api.post(`/api/admin/device/services/${s.id}/restart`).catch(() => {}); setTimeout(refresh, 300); };
+    $('#svcGrid').onclick = async (e) => {
+      const card = e.target.closest('[data-svc]'), act = e.target.closest('[data-act]')?.dataset.act; if (!card || !act) return;
+      const s = last.services.find((x) => x.id === card.dataset.svc);
+      if (act === 'edit') {
+        const v = await modal({ title: `${s.name} 편집`, body: svcForm(s) + `<div class="row"><button type="button" class="btn danger xs" id="delSvc">서비스 삭제</button></div>`, submit: '저장', onSubmit: (v) => api.put(`/api/admin/device/services/${s.id}`, v), onOpen: (f) => { $('#delSvc', f).onclick = async () => { if (await confirmDlg('서비스 삭제', `${s.name} 을 목록에서 삭제할까요?`)) { await api.del(`/api/admin/device/services/${s.id}`); f.closest('.modal-bg').remove(); refresh(); } }; } });
+        if (v) refresh(); return;
+      }
+      try { await api.post(`/api/admin/device/services/${s.id}/${act}`); cliPrint(`${s.name}: ${act}`, 'm'); } catch (err) { toast(err.message, 'error', 6000); }
+      refresh();
+    };
+    const volForm = (v = {}) => fields([{ name: 'name', label: '이름', value: v.name ?? '/volume', required: true }, { name: 'mount', label: '마운트 경로', value: v.mount ?? '', mono: true }, { name: 'totalGB', label: '전체 용량 (GB)', type: 'number', value: v.total ? Math.round(v.total / 1024 ** 3) : 1000, min: 1 }, { name: 'usedGB', label: '사용량 (GB)', type: 'number', value: v.total ? Math.round(v.used / 1024 ** 3) : 500, min: 0 }, { name: 'warnAt', label: '경고 임계값 (%)', type: 'number', value: v.warnAt ?? 90, min: 50, max: 99 }, { name: 'note', label: '메모', value: v.note ?? '', full: true }]);
+    $('#addVol').onclick = async () => { const v = await modal({ title: '가상 볼륨 추가', body: '<p class="muted small">실제 디스크는 자동으로 표시됩니다. 가상 볼륨은 NAS·외장 스토리지 등을 콘솔에 표시하기 위한 항목입니다.</p>' + volForm(), submit: '추가', onSubmit: (v) => api.post('/api/admin/device/volumes', v) }); if (v) refresh(); };
+    $('#volList').onclick = async (e) => {
+      const row = e.target.closest('[data-vol]'), act = e.target.closest('[data-act]')?.dataset.act; if (!row || !act) return;
+      const v = last.volumes.find((x) => x.id === row.dataset.vol);
+      if (act === 'del') { if (await confirmDlg('볼륨 삭제', `${v.name} 가상 볼륨을 삭제할까요?`)) { await api.del(`/api/admin/device/volumes/${v.id}`); refresh(); } }
+      if (act === 'edit') { const r = await modal({ title: `${v.name} 편집`, body: volForm(v), submit: '저장', onSubmit: (x) => api.put(`/api/admin/device/volumes/${v.id}`, x) }); if (r) refresh(); }
+    };
+    $('#fwSwitch').onchange = async (e) => {
+      const on = e.target.checked;
+      if (!on && !await confirmDlg('방화벽 끄기', '방화벽을 비활성화하면 모든 포트가 외부에 노출될 수 있습니다. 계속할까요?', { submit: '끄기' })) { e.target.checked = true; return; }
+      try { await api.put('/api/admin/device/firewall', { enabled: on }); toast(`방화벽 ${on ? '활성화' : '비활성화'}`, on ? 'ok' : 'warn'); } catch (err) { toast(err.message, 'error'); e.target.checked = !on; }
+      refresh();
+    };
+    $('#netBox').onclick = async (e) => {
+      if (e.target.closest('#addRule')) { const v = await modal({ title: '방화벽 규칙 추가', body: fields([{ name: 'action', label: '정책', type: 'select', value: 'allow', options: [{ value: 'allow', label: '허용' }, { value: 'deny', label: '차단' }] }, { name: 'port', label: '포트', type: 'number', min: 1, max: 65535, required: true }, { name: 'proto', label: '프로토콜', type: 'select', value: 'tcp', options: [{ value: 'tcp', label: 'TCP' }, { value: 'udp', label: 'UDP' }] }, { name: 'from', label: '출발지 (any 또는 CIDR)', value: 'any', mono: true }, { name: 'note', label: '메모', full: true }]), submit: '추가', onSubmit: (v) => api.post('/api/admin/device/firewall/rules', v) }); if (v) refresh(); return; }
+      const del = e.target.closest('[data-act=delrule]'); if (del) { await api.del(`/api/admin/device/firewall/rules/${del.closest('tr').dataset.rule}`); refresh(); }
+    };
+    $('#ackAll').onclick = async () => { await api.post('/api/admin/device/alerts/ack-all'); refresh(); };
+    $('#clearAcked').onclick = async () => { await api.post('/api/admin/device/alerts/clear-acked'); refresh(); };
+    $('#alertList').onclick = async (e) => {
+      const row = e.target.closest('[data-alert]'), act = e.target.closest('[data-act]')?.dataset.act; if (!row || !act) return;
+      if (act === 'ack') await api.post(`/api/admin/device/alerts/${row.dataset.alert}/ack`);
+      if (act === 'del') await api.del(`/api/admin/device/alerts/${row.dataset.alert}`);
+      refresh();
+    };
+    // ---- 명령줄
+    const out = $('#cliOut'), inp = $('#cliIn');
+    const cliPrint = (text, cls) => { const span = document.createElement('span'); if (cls) span.className = cls; span.textContent = text + '\n'; out.appendChild(span); out.scrollTop = out.scrollHeight; };
+    const runCli = async (line) => {
+      cliPrint(`admin@${(last?.device.name || 'halcyon-01').toLowerCase()}:~$ ${line}`, 'p');
+      const [c, ...a] = line.trim().split(/\s+/);
+      if (c === 'clear') { out.innerHTML = ''; return; }
+      if (c === 'open') { const page = a[0] || 'dashboard'; if (views[page]) { location.hash = '#/' + page; } else cliPrint(`페이지 없음: ${page} (${Object.keys(views).join(', ')})`, 'e'); return; }
+      try { const r = await api.post('/api/admin/device/cli', { line }); cliPrint(r.output || '', r.error ? 'e' : ''); if (r.refresh) refresh(); }
+      catch (err) { cliPrint('오류: ' + err.message, 'e'); }
+    };
+    inp.onkeydown = (e) => {
+      if (e.key === 'Enter') { const line = inp.value.trim(); inp.value = ''; if (!line) return; cliHistory.push(line); cliIdx = cliHistory.length; runCli(line); }
+      else if (e.key === 'ArrowUp') { e.preventDefault(); if (cliIdx > 0) { cliIdx--; inp.value = cliHistory[cliIdx]; } }
+      else if (e.key === 'ArrowDown') { e.preventDefault(); if (cliIdx < cliHistory.length - 1) { cliIdx++; inp.value = cliHistory[cliIdx]; } else { cliIdx = cliHistory.length; inp.value = ''; } }
+    };
+    $('#cliPrompt').textContent = `admin@${last.device.name.toLowerCase()}:~$`;
+    every(2500, refresh);
+    every(900, async () => { if (last && last.device.power !== 'on') await refresh(); });
   },
 };
 
