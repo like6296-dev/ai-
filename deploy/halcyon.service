@@ -1,0 +1,19 @@
+# /etc/systemd/system/halcyon.service
+# sudo systemctl daemon-reload && sudo systemctl enable --now halcyon
+[Unit]
+Description=HALCYON 홈 서버 콘솔
+After=network.target
+
+[Service]
+Type=simple
+# VPN(wg-quick)·QEMU·프로세스 종료 등을 쓰려면 root, 아니면 전용 사용자 권장
+User=root
+WorkingDirectory=/opt/halcyon
+Environment=PORT=3000
+Environment=DATA_DIR=/opt/halcyon/data
+ExecStart=/usr/bin/node /opt/halcyon/server.js
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target
